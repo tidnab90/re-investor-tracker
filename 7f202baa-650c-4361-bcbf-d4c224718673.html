@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RE Investor Tracker</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f4f1;
+    --bg-tertiary: #eeece8;
+    --text: #1a1a18;
+    --text-secondary: #6b6a66;
+    --text-tertiary: #9e9c97;
+    --border: rgba(0,0,0,0.12);
+    --border-hover: rgba(0,0,0,0.22);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg-secondary: #262623;
+      --bg-tertiary: #2e2e2b;
+      --text: #f0ede8;
+      --text-secondary: #9e9c97;
+      --text-tertiary: #6b6a66;
+      --border: rgba(255,255,255,0.1);
+      --border-hover: rgba(255,255,255,0.2);
+    }
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg-tertiary);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px 48px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .app-header {
+    margin-bottom: 20px;
+    padding: 0 2px;
+  }
+
+  .app-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .app-sub {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+
+  .nav {
+    display: flex;
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .nav button {
+    flex: 1;
+    padding: 11px 6px;
+    font-size: 13px;
+    font-family: var(--font);
+    background: transparent;
+    border: none;
+    border-right: 0.5px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .nav button:last-child { border-right: none; }
+
+  .nav button.active {
+    background: var(--bg);
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+
+  .field { margin-bottom: 14px; }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 15px;
+    font-family: var(--font);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239e9c97' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--border-hover);
+  }
+
+  .field textarea {
+    resize: vertical;
+    min-height: 72px;
+    line-height: 1.5;
+  }
+
+  .three-col {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 8px;
+  }
+
+  .three-col .field input {
+    padding: 10px 8px;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .prop-add-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .prop-add-row input {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: var(--font);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+  }
+
+  .prop-add-row button {
+    padding: 8px 14px;
+    font-size: 13px;
+    font-family: var(--font);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+
+  .prop-add-row button:hover { background: var(--bg-secondary); }
+
+  .submit-btn {
+    width: 100%;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font);
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    margin-top: 4px;
+    transition: opacity 0.15s;
+  }
+
+  .submit-btn:active { opacity: 0.8; }
+
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .filter-row select {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 30px 9px 10px;
+    font-size: 13px;
+    font-family: var(--font);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239e9c97' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+
+  .export-btn {
+    padding: 9px 14px;
+    font-size: 13px;
+    font-family: var(--font);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+
+  .export-btn:hover { background: var(--bg-secondary); }
+
+  .entry-card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 7px;
+  }
+
+  .entry-badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 99px;
+  }
+
+  .entry-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .entry-date { font-size: 12px; color: var(--text-tertiary); }
+
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 2px 4px;
+    font-size: 18px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+
+  .delete-btn:hover { color: var(--text-secondary); }
+
+  .entry-main {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+
+  .entry-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 5px;
+  }
+
+  .entry-meta span {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .entry-prop {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 6px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 14px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-tertiary);
+    font-size: 14px;
+  }
+
+  .empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    background: var(--text);
+    color: var(--bg);
+    padding: 9px 18px;
+    border-radius: var(--radius-lg);
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 100;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="app-header">
+    <div class="app-title">RE Investor Tracker</div>
+    <div class="app-sub">Log activities, miles &amp; expenses</div>
+  </div>
+
+  <nav class="nav">
+    <button class="active" onclick="showScreen('add')">＋ Log</button>
+    <button onclick="showScreen('list')">≡ History</button>
+    <button onclick="showScreen('summary')">◫ Summary</button>
+  </nav>
+
+  <!-- LOG -->
+  <div id="screen-add" class="screen active">
+    <div class="card">
+      <div class="field">
+        <label>Activity type</label>
+        <select id="f-type">
+          <option value="">Select activity…</option>
+          <option>Maintenance</option>
+          <option>Repair</option>
+          <option>Inspection</option>
+          <option>Tenant visit</option>
+          <option>Showing</option>
+          <option>Landscaping</option>
+          <option>Cleaning</option>
+          <option>Administrative</option>
+          <option>Supplies run</option>
+          <option>Contractor meeting</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Property</label>
+        <select id="f-property">
+          <option value="">Select property…</option>
+        </select>
+        <div class="prop-add-row">
+          <input type="text" id="new-prop-input" placeholder="Add new property…">
+          <button onclick="addProperty()">Add</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="f-date">
+      </div>
+
+      <div class="three-col">
+        <div class="field">
+          <label>Expense ($)</label>
+          <input type="number" id="f-amount" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="field">
+          <label>Miles</label>
+          <input type="number" id="f-miles" placeholder="0.0" step="0.1" min="0">
+        </div>
+        <div class="field">
+          <label>Hours</label>
+          <input type="number" id="f-hours" placeholder="0.0" step="0.1" min="0">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Purpose / Notes</label>
+        <textarea id="f-purpose" placeholder="Describe the activity…"></textarea>
+      </div>
+
+      <button class="submit-btn" onclick="saveEntry()">Save entry</button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="screen-list" class="screen">
+    <div class="filter-row">
+      <select id="filter-type" onchange="renderList()">
+        <option value="">All activities</option>
+      </select>
+      <select id="filter-prop" onchange="renderList()">
+        <option value="">All properties</option>
+      </select>
+      <button class="export-btn" onclick="exportCSV()">↓ CSV</button>
+    </div>
+    <div id="list-container"></div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div id="screen-summary" class="screen">
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="section-title">By property</div>
+    <div id="prop-breakdown"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 're-investor-tracker';
+const PROPS_KEY   = 're-investor-props';
+
+const ACTIVITY_TYPES = ['Maintenance','Repair','Inspection','Tenant visit','Showing','Landscaping','Cleaning','Administrative','Supplies run','Contractor meeting','Other'];
+
+const TYPE_COLORS = {
+  'Maintenance':        { bg:'#E6F1FB', color:'#185FA5' },
+  'Repair':             { bg:'#FCEBEB', color:'#A32D2D' },
+  'Inspection':         { bg:'#FAEEDA', color:'#854F0B' },
+  'Tenant visit':       { bg:'#EEEDFE', color:'#534AB7' },
+  'Showing':            { bg:'#EAF3DE', color:'#3B6D11' },
+  'Landscaping':        { bg:'#E1F5EE', color:'#0F6E56' },
+  'Cleaning':           { bg:'#FBEAF0', color:'#993556' },
+  'Administrative':     { bg:'#F1EFE8', color:'#5F5E5A' },
+  'Supplies run':       { bg:'#EAF3DE', color:'#3B6D11' },
+  'Contractor meeting': { bg:'#FAEEDA', color:'#854F0B' },
+  'Other':              { bg:'#F1EFE8', color:'#5F5E5A' },
+};
+
+let entries = [];
+let properties = ['Oakland Duplex'];
+
+function loadData() {
+  try { const r = localStorage.getItem(STORAGE_KEY); if (r) entries = JSON.parse(r); } catch(e) { entries = []; }
+  try { const r = localStorage.getItem(PROPS_KEY); if (r) properties = JSON.parse(r); } catch(e) {}
+  rebuildSelects();
+}
+
+function saveData() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); } catch(e) {}
+  try { localStorage.setItem(PROPS_KEY, JSON.stringify(properties)); } catch(e) {}
+}
+
+function rebuildSelects() {
+  const fp = document.getElementById('f-property');
+  const fpCur = fp.value;
+  fp.innerHTML = '<option value="">Select property…</option>' + properties.map(p=>`<option value="${p}">${p}</option>`).join('');
+  if (fpCur) fp.value = fpCur;
+
+  const filterProp = document.getElementById('filter-prop');
+  const fpfCur = filterProp.value;
+  filterProp.innerHTML = '<option value="">All properties</option>' + properties.map(p=>`<option value="${p}">${p}</option>`).join('');
+  if (fpfCur) filterProp.value = fpfCur;
+
+  const filterType = document.getElementById('filter-type');
+  const ftCur = filterType.value;
+  filterType.innerHTML = '<option value="">All activities</option>' + ACTIVITY_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('');
+  if (ftCur) filterType.value = ftCur;
+}
+
+function addProperty() {
+  const inp = document.getElementById('new-prop-input');
+  const v = inp.value.trim();
+  if (!v || properties.includes(v)) { inp.value=''; return; }
+  properties.push(v);
+  rebuildSelects();
+  document.getElementById('f-property').value = v;
+  inp.value = '';
+  saveData();
+  showToast('Property added');
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  const idx = ['add','list','summary'].indexOf(name);
+  document.querySelectorAll('.nav button')[idx].classList.add('active');
+  if (name === 'list') renderList();
+  if (name === 'summary') renderSummary();
+}
+
+function saveEntry() {
+  const type = document.getElementById('f-type').value;
+  if (!type) { showToast('Select an activity type'); return; }
+  const prop = document.getElementById('f-property').value;
+  if (!prop) { showToast('Select a property'); return; }
+  const date = document.getElementById('f-date').value;
+  if (!date) { showToast('Pick a date'); return; }
+
+  const entry = {
+    id: Date.now(), type, property: prop, date,
+    amount: parseFloat(document.getElementById('f-amount').value) || 0,
+    miles:  parseFloat(document.getElementById('f-miles').value)  || 0,
+    hours:  parseFloat(document.getElementById('f-hours').value)  || 0,
+    purpose: document.getElementById('f-purpose').value.trim(),
+  };
+
+  entries.unshift(entry);
+  saveData();
+  showToast('Entry saved ✓');
+  resetForm();
+}
+
+function resetForm() {
+  ['f-type','f-property','f-purpose'].forEach(id => document.getElementById(id).value = '');
+  ['f-amount','f-miles','f-hours'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-date').value = today;
+}
+
+function deleteEntry(id) {
+  if (!confirm('Delete this entry?')) return;
+  entries = entries.filter(e => e.id !== id);
+  saveData();
+  renderList();
+}
+
+function renderList() {
+  rebuildSelects();
+  const ft = document.getElementById('filter-type').value;
+  const fp = document.getElementById('filter-prop').value;
+  if (ft) document.getElementById('filter-type').value = ft;
+  if (fp) document.getElementById('filter-prop').value = fp;
+
+  const filtered = entries.filter(e => (!ft || e.type === ft) && (!fp || e.property === fp));
+  const c = document.getElementById('list-container');
+  if (!filtered.length) {
+    c.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>No entries yet</div>';
+    return;
+  }
+  c.innerHTML = filtered.map(e => {
+    const tc = TYPE_COLORS[e.type] || { bg:'#F1EFE8', color:'#5F5E5A' };
+    const metas = [];
+    if (e.amount) metas.push(`<span>$${e.amount.toFixed(2)}</span>`);
+    if (e.miles)  metas.push(`<span>${e.miles.toFixed(1)} mi</span>`);
+    if (e.hours)  metas.push(`<span>${e.hours.toFixed(1)} hrs</span>`);
+    return `<div class="entry-card">
+      <div class="entry-header">
+        <span class="entry-badge" style="background:${tc.bg};color:${tc.color}">${e.type}</span>
+        <div class="entry-right">
+          <span class="entry-date">${e.date}</span>
+          <button class="delete-btn" onclick="deleteEntry(${e.id})" aria-label="Delete">×</button>
+        </div>
+      </div>
+      ${e.purpose ? `<div class="entry-main">${e.purpose}</div>` : ''}
+      ${metas.length ? `<div class="entry-meta">${metas.join('')}</div>` : ''}
+      <div class="entry-prop">🏠 ${e.property}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSummary() {
+  const totalMiles  = entries.reduce((s,e) => s + e.miles, 0);
+  const totalAmount = entries.reduce((s,e) => s + e.amount, 0);
+  const totalHours  = entries.reduce((s,e) => s + e.hours, 0);
+  const irs = 0.67;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total expenses</div><div class="stat-value">$${totalAmount.toFixed(2)}</div><div class="stat-sub">${entries.filter(e=>e.amount>0).length} entries with cost</div></div>
+    <div class="stat-card"><div class="stat-label">Total miles</div><div class="stat-value">${totalMiles.toFixed(1)}</div><div class="stat-sub">$${(totalMiles*irs).toFixed(2)} @ IRS rate</div></div>
+    <div class="stat-card"><div class="stat-label">Time spent</div><div class="stat-value">${totalHours.toFixed(1)} hrs</div><div class="stat-sub">${entries.length} total activities</div></div>
+    <div class="stat-card"><div class="stat-label">Total deductible</div><div class="stat-value">$${(totalAmount + totalMiles*irs).toFixed(2)}</div><div class="stat-sub">expenses + mileage</div></div>
+  `;
+
+  const byProp = {};
+  entries.forEach(e => {
+    if (!byProp[e.property]) byProp[e.property] = { amount:0, miles:0, hours:0, count:0 };
+    byProp[e.property].amount += e.amount;
+    byProp[e.property].miles  += e.miles;
+    byProp[e.property].hours  += e.hours;
+    byProp[e.property].count++;
+  });
+
+  document.getElementById('prop-breakdown').innerHTML = Object.entries(byProp).map(([p,d]) =>
+    `<div class="entry-card">
+      <div style="font-size:14px;font-weight:500;margin-bottom:6px;">🏠 ${p}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--text-secondary);">
+        <span>${d.count} activities</span>
+        ${d.amount ? `<span>$${d.amount.toFixed(2)}</span>` : ''}
+        ${d.miles  ? `<span>${d.miles.toFixed(1)} mi</span>` : ''}
+        ${d.hours  ? `<span>${d.hours.toFixed(1)} hrs</span>` : ''}
+      </div>
+    </div>`
+  ).join('') || '<div style="font-size:14px;color:var(--text-tertiary);">No data yet</div>';
+}
+
+function exportCSV() {
+  const headers = ['Date','Activity type','Property','Expense ($)','Miles','Hours','Purpose/Notes'];
+  const rows = entries.map(e => [
+    e.date, e.type, e.property,
+    e.amount||'', e.miles||'', e.hours||'', e.purpose
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 're-investor-tracker.csv';
+  a.click();
+  showToast('CSV exported');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+const today = new Date().toISOString().slice(0,10);
+document.getElementById('f-date').value = today;
+loadData();
+</script>
+</body>
+</html>
